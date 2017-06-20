@@ -2,11 +2,29 @@
 
 # This script creates binned file dumps, using MarkovAligner to bin and score FASTA reads:
 # Each haplotype has a set of files with "TiesExcluded" or "TiesSplit" suffixes, which correspond to whether ambiguous
-# reads were thrown out. Given a haplotype+suffix I have the following files:
+# reads were thrown out.
+
+# Paralog features are collected from a VCF including all known features
+# Sequences must be aligned in SAM format to the same reference as was used to generate the VCF
+
+# The total read counts are printed to stdout
+
+# Input files:
+#   -Aligned sequences (.SAM)
+#   -Variant file (.VCF)
+
+# Output files:
+#   -Given a haplotype+suffix the following files are created:
 #       .fa    -    a list of the unaligned reads that were estimated to match that haplotype with their bit score
 #                   (from -3 to 0) tagged onto their name
 #       .txt   -    a feature table for all the aligned reads assigned to the haplotype (with the first row being the
 #                   reference haplotype, see far right columns for names/scores)
+#   -qualityHist.png: a histogram showing the number of non-missing features per read
+#   -exceptionalReads.fa: all low scoring but high "quality" reads are dumped here for troubleshooting purposes. Their
+#    paralog matches are listed after the FASTA labels along with score and "quality" (% non-missing features)
+
+# A plot is generated showing the score distributions for each variant, colored by the % of non-missing features in
+# each aligned read, Yellow=80-100%, Black=0-20%
 
 from MarkovAligner import *
 from collections import defaultdict
