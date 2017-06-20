@@ -4,6 +4,7 @@
 
 import random
 import numpy
+import sys
 
 class MarkovAligner:
     '''
@@ -15,6 +16,44 @@ class MarkovAligner:
         self.path = list()
         self.sequence = None
         self.bernoulliProbability = bernoulliProbability
+        self.distribution = "bernoulliDiscrete"
+        self.distributions = {"bernoulliDiscrete":self.bernoulliDiscreteDistribution,
+                              "mixedBernoulliDiscrete":self.mixedBernoulliDiscreteDistribution}
+
+    class mixedBernoulliDiscreteDistribution:
+        '''
+        A distribution which has multiple possible match values: match or non-match with probability p or q=(1-p).
+        Each node in the model contains this distribution, which a match or "symbol" parameter specific to a nucleotide
+        or feature at a given position from a template sequence.
+        '''
+
+        def __init__(self,symbol=set(),p=0.0,antisymbol='*'):
+            self.symbol = symbol    #to be matched (typically a set of sequences or characters)
+            self.antisymbol = antisymbol    #all non matches for this state are returned as this during sampling
+            self.p = p  #probability of the symbol given this state
+
+            if len(self.symbol)==0:
+                self.p=0.9
+
+        def probability(self,symbol):
+
+            if symbol in self.symbol:
+                return numpy.log2(self.p)
+            else:
+                # if symbol!= None:
+                #     print('\n')
+                #     print(symbol)
+                #     print(self.symbol)
+                return numpy.log2(1-self.p)
+
+        def sample(self):   #currently unused (no sampling method exists in MarkovAligner class)
+
+            randomFloat = random.random()
+
+            if randomFloat < self.p:
+                return self.symbol.pop()
+            else:
+                return self.antisymbol
 
     class bernoulliDiscreteDistribution:
         '''
@@ -44,10 +83,13 @@ class MarkovAligner:
             else:
                 return self.antisymbol
 
-    def buildModel(self,sequences,pathNames=None,probabilities=None):
+    def buildModel(self,sequences,pathNames=None,probabilities=None,distribution="bernoulliDiscrete"):
         '''
         Build a model using a set of template sequences, producing one independent path for each template
         '''
+
+        self.distribution = distribution
+
         if pathNames == None:
             pathNames = list(map(str,range(0,len(sequences))))
 
@@ -61,17 +103,20 @@ class MarkovAligner:
 
         # self.clear()
 
-    def buildPath(self,sequence,probabilities=None):
+    def buildPath(self,sequence,probabilities=None,):
         '''
         Helper function for building the model
         '''
         if probabilities == None:
             probabilities = [0.9]*len(sequence)
 
+        # print(sequence)
+
         for s,symbol in enumerate(sequence):
             probability = probabilities[s]
+            # print(symbol)
 
-            self.path.append(self.bernoulliDiscreteDistribution(symbol, probability))
+            self.path.append(self.distributions[self.distribution](symbol, probability))
 
     def clear(self):
         self.path = None
@@ -119,19 +164,41 @@ class MarkovAligner:
 
 
 # # Testing
-# sequences = [['a','a','a'],
-#              ['b','b','b'],
-#              ['c','c','c']]
+# sequences = [['a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a']*900,
+#              ['b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b','b']*900,
+#              ['c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c','c']*900]
 #
 # names = ['A','B','C']
 #
 # model = MarkovAligner()
 # model.buildModel(sequences,names)
 #
-# testSeq = ['a','a','a']
+# testSeq = ['d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d','d']*900
 #
 # p = model.forward(testSeq,'A')
 # q = model.forward(testSeq,'B')
 #
 # print(2**p)
 # print(2**q)
+#
+# print(model.maximumProbabilityPath(testSeq))
+
+# # More testing
+# sequences = [[set(['a'])]*40,
+#              [set(['a','b'])]*40,
+#              [set(['c'])]*40]
+#
+# names = ['A','B','C']
+#
+# model = MarkovAligner()
+# model.buildModel(sequences,names,distribution="mixedBernoulliDiscrete")
+#
+# testSeq = ['d']*40
+#
+# p = model.forward(testSeq,'A')
+# q = model.forward(testSeq,'B')
+#
+# print(2**p)
+# print(2**q)
+#
+# print(model.maximumProbabilityPath(testSeq))
