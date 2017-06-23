@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 # This script takes a VCF and identifies unique features for each NOTCH2 or NOTCH2NL paralog assuming the name contains
-# at some position "NOTCH2NL-P" or "NOTCH-P" where P is the paralog.
+# at some position "NOTCH2NL-P" or "NOTCH2-P" where P is the paralog.
 
 # Input:
 #   VCF folder and filename (use empty string if VCF in same folder)
